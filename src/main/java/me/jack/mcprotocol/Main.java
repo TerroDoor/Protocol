@@ -267,10 +267,10 @@ public class Main {
                             DataConversion.writeInt($, 0);
                             DataConversion.writeBoolean($, true);
                             DataConversion.writeShort($, (short) 1);
-                            DataConversion.writeVarInt($, 12544); //one overworld section and biomes
+                            DataConversion.writeVarInt($, 12544); //one overworld section and biomes  (size)
 
-                            Chunk section = new Chunk(0,20);
-                            section.setBlockTypeAndMeta(0,10, 0, 1, 0);
+                            Chunk section = new Chunk(0,0);
+                            section.setBlockTypeAndMeta(section.x,0, section.z, 2, 0);
 
                             for (int i = 0; i < section.sections[0].types.length; ++i) {
 
@@ -292,7 +292,7 @@ public class Main {
 
                         //listen for incoming packets
                         while (server.isBound()) {
-                            
+
                             final int length = DataConversion.readVarInt(input);
                             final int packetID = DataConversion.readVarInt(input);
 
