@@ -18,10 +18,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
-
-    public static List<Integer> inbound = new ArrayList<>();
 
     public static final String MOTD = new Gson().toJson(
             Map.of("version", Map.of("name", "1.8.8", "protocol", 47),
@@ -34,7 +33,6 @@ public class Main {
     public static void main(String[] args) throws Throwable {
 
         System.out.println("Starting server...");
-
         //encrpytion
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         keyPairGenerator.initialize(1024);
@@ -89,7 +87,6 @@ public class Main {
                     //login start
                     DataConversion.readPacket(in, 0x00);
                     final String username = DataConversion.readString(in);
-
 
                     //encryption request
 
@@ -229,7 +226,8 @@ public class Main {
 
                         //play state
 
-                        final int EID = 0;
+                        final int EID = new AtomicInteger().getAndIncrement();
+                        System.out.println(EID + " EID");
                         final byte gm = 0;
                         final byte dimension = 0;
                         final byte difficulty = 0;
@@ -261,31 +259,40 @@ public class Main {
                             System.out.println("wrote pos");
                         });
 
+                        final Chunk chunk = Chunk.loadChunk(0,0);
 
-                        DataConversion.writePacket(out, 0x21, $ -> {
-                            DataConversion.writeInt($, 0);
-                            DataConversion.writeInt($, 0);
+
+                        DataConversion.writePacket(output, 0x21, $ -> {
+                            DataConversion.writeInt($, chunk.x);
+                            DataConversion.writeInt($, chunk.z);
                             DataConversion.writeBoolean($, true);
-                            DataConversion.writeShort($, (short) 1);
-                            DataConversion.writeVarInt($, 12544); //one overworld section and biomes  (size)
 
-                            Chunk section = new Chunk(0,0);
-                            section.setBlockTypeAndMeta(section.x,0, section.z, 2, 0);
+                            Chunk.writeChunk($, chunk);
+                        });
 
-                            for (int i = 0; i < section.sections[0].types.length; ++i) {
 
-                                final short data = section.sections[0].types[i];
+                        final Chunk chunk2 = Chunk.loadChunk(-32,-32);
 
-                                DataConversion.writeByte($, (byte) (data & 0xFF));
-                                DataConversion.writeByte($, (byte) (data >> 8));
+                        DataConversion.writePacket(output, 0x21, $ -> {
+                            DataConversion.writeInt($, chunk2.x);
+                            DataConversion.writeInt($, chunk2.z);
+                            DataConversion.writeBoolean($, true);
+
+                            Chunk.writeChunk($, chunk2);
+                        });
+                        //chunk.setBlockTypeAndMeta(1, 80, 1, 2, 1);
+                        /*
+                            for (int i = 0; i < chunk.x + 16; ++i) {
+                                chunk.setBlockTypeAndMeta(1, 80, 1, 1, 1);
+                                //chunk.setSkyLighting(i, 81, 1, (byte) 0x0f);
+                                //chunk.setBlockTypeAndMeta(1, 81, 1, 50, 1);
                             }
 
 
-                            DataConversion.writeBytes($, section.sections[0].sky);
-                            DataConversion.writeBytes($, section.sections[0].emitted);
-                            DataConversion.writeBytes($, section.biomes);
+                         */
 
-                        });
+                       // chunk.setEmittedLighting(1, 80, 1, (byte) 0x0f);
+
 
                         //send keepALive packet every 20 sec
                         sendKeepAlive(output);
@@ -352,7 +359,6 @@ public class Main {
                                     input.skipBytes(length - 1);
                             }
 
-
                         }
                         // Thread.sleep(10_100);
 
@@ -378,7 +384,6 @@ public class Main {
             }
         }, 0, 20000);//wait 0 ms before doing the action and do it evry 1000ms (1second)
     }
-
 
 
 }

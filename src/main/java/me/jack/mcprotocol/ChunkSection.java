@@ -2,12 +2,18 @@ package me.jack.mcprotocol;
 
 public class ChunkSection {
 
-    final byte[] sky = new byte[2048];
-    final byte[] emitted = new byte[2048];
-    short[] types = new short[8192];
+    byte[] sky;
+    byte[] emitted;
+    short[] types;
 
     public ChunkSection() {
 
+    }
+
+    public ChunkSection(short[] types, byte[] sky, byte[] emitted) {
+        this.types = types;
+        this.sky = sky;
+        this.emitted = emitted;
     }
 
 }

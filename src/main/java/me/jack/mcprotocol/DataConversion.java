@@ -10,6 +10,9 @@ public class DataConversion {
     private static final int SEGMENT_BITS = 0x7F;
     private static final int CONTINUE_BIT = 0x80;
 
+    public static void readNBT(DataInput in) {
+
+    }
     public static void writeUUID(DataOutput out, UUID uuid) {
         try {
             out.writeLong(uuid.getMostSignificantBits());
@@ -21,7 +24,7 @@ public class DataConversion {
         }
     }
 
-    public static void readPacket(DataInput in, int id) throws IOException {
+    public static void readPacket(DataInput in, int id) {
         readVarInt(in);//length (ignored to get ID)
         if (id != readVarInt(in))
             throw new IllegalStateException("Wrong packet ID");
