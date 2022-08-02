@@ -228,10 +228,10 @@ public class Main {
 
                         final int EID = new AtomicInteger().getAndIncrement();
                         System.out.println(EID + " EID");
-                        final byte gm = 0;
+                        final byte gm = 1;
                         final byte dimension = 0;
-                        final byte difficulty = 0;
-                        final byte maxPlayers = 5;
+                        final byte difficulty = 1;
+                        final byte maxPlayers = 2;
                         final String level = "default";
 
                         //join game packet
@@ -250,49 +250,28 @@ public class Main {
 
                         //pos packet (closes downlaoding terrain)
                         DataConversion.writePacket(output, 0x08, $ -> {
-                            DataConversion.writeDouble($, 0.0D);
-                            DataConversion.writeDouble($, 100.0);
-                            DataConversion.writeDouble($, 0.0D);
-                            DataConversion.writeFloat($, 0.0f);
+                            DataConversion.writeDouble($, 200.0D);
+                            DataConversion.writeDouble($, 75.0);
+                            DataConversion.writeDouble($, 220);
+                            DataConversion.writeFloat($, 300.0f);
                             DataConversion.writeFloat($, 0.0f);
                             DataConversion.writeByte($, (byte) 0);
                             System.out.println("wrote pos");
                         });
 
-                        final Chunk chunk = Chunk.loadChunk(0,0);
 
+                            for (int i = 0; i < 16; i++) {
+                                for (int j = 0; j < 16; j++) {
+                                    Chunk chunk = Chunk.loadChunk(i, j);
+                                    DataConversion.writePacket(output, 0x21, $ -> {
+                                        DataConversion.writeInt($, chunk.x);
+                                        DataConversion.writeInt($, chunk.z);
+                                        DataConversion.writeBoolean($, true);
 
-                        DataConversion.writePacket(output, 0x21, $ -> {
-                            DataConversion.writeInt($, chunk.x);
-                            DataConversion.writeInt($, chunk.z);
-                            DataConversion.writeBoolean($, true);
-
-                            Chunk.writeChunk($, chunk);
-                        });
-
-
-                        final Chunk chunk2 = Chunk.loadChunk(-32,-32);
-
-                        DataConversion.writePacket(output, 0x21, $ -> {
-                            DataConversion.writeInt($, chunk2.x);
-                            DataConversion.writeInt($, chunk2.z);
-                            DataConversion.writeBoolean($, true);
-
-                            Chunk.writeChunk($, chunk2);
-                        });
-                        //chunk.setBlockTypeAndMeta(1, 80, 1, 2, 1);
-                        /*
-                            for (int i = 0; i < chunk.x + 16; ++i) {
-                                chunk.setBlockTypeAndMeta(1, 80, 1, 1, 1);
-                                //chunk.setSkyLighting(i, 81, 1, (byte) 0x0f);
-                                //chunk.setBlockTypeAndMeta(1, 81, 1, 50, 1);
+                                        Chunk.writeChunk($, chunk);
+                                    });
+                                }
                             }
-
-
-                         */
-
-                       // chunk.setEmittedLighting(1, 80, 1, (byte) 0x0f);
-
 
                         //send keepALive packet every 20 sec
                         sendKeepAlive(output);

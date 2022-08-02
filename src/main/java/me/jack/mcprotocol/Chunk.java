@@ -2,16 +2,18 @@ package me.jack.mcprotocol;
 
 import me.jack.mcprotocol.nbt.Tag;
 
-import javax.print.DocFlavor;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.InflaterInputStream;
 
 public class Chunk {
 
     //coords
-    final int x, z;
+    int x, z;
     final ChunkSection[] sections = new ChunkSection[16];
     byte[] biomes;
 
@@ -25,8 +27,8 @@ public class Chunk {
         //format to YZX and shifting the bits to change it from XYZ for decoding with >> 4
         final int index = ((y & 0xf) << 8) | (z << 4) | x;
 
-        //creating a new section (16x16x16) shifting the y is the same as y/16 for one section per section object
-        final ChunkSection section = sections[y >> 4] == null ? sections[y >> 4] = new ChunkSection() : sections[y >> 4];
+        //creating a new section (16x16x16) shifting the y is the same as y/16 for one section per section object (y >> 4 = y / 16)
+        final ChunkSection section = sections[y / 16] == null ? sections[y / 16] = new ChunkSection() : sections[y >> 4];
 
         //encoded with << 4
         section.types[index] = (short) (type << 4 | meta);
@@ -143,7 +145,6 @@ public class Chunk {
             }
         }
 
-        //write biomes
         DataConversion.writeBytes(out, chunk.biomes);
 
 
@@ -153,39 +154,40 @@ public class Chunk {
 
         final int flooredX = x >> 5;
         final int flooredZ = z >> 5;
-        File path;
 
-        if (x < 0 && z < 0) {//todo fix negative mca's
-             path = new File("C:\\Users\\newja\\AppData\\Roaming\\.minecraft\\saves\\New World\\region\\r.-" + newX + ".-" + newZ + ".mca");
-        } else {
-             path = new File("C:\\Users\\newja\\AppData\\Roaming\\.minecraft\\saves\\New World\\region\\r." + flooredX + "." + flooredZ + ".mca");
-        }
+
+        File path = new File("C:\\Users\\newja\\AppData\\Roaming\\.minecraft\\saves\\PROTOCOL_SHOW_OFF\\region\\r." + flooredX + "." + flooredZ + ".mca");
 
         RandomAccessFile file = new RandomAccessFile(path, "r");
 
+        System.out.println(path);
         System.out.println(x + "x" + z + "z");
 
         //thankyou exerosis
         //the formula to point to the start of the region file where the chunks are located. we point to the ones we want
         //the location table gives you a position that already skips the timestamp table
 
+        file.seek(((x & 31) + (z & 31) * 32) * 4);//location table formula
 
-        file.seek(4 * ((x & 32) + (z & 32) * 32));
-        //this seeks to where the chunk is located (top of file to nbt section bottom of file). we point to the one corresponding to the first seek.
-        file.seek(4096 * (file.readInt() >> 8));
-        //get length of the file from its starting positions and store the data in a byte array to later be used for decompression(minimizing data size at a cost of CPU)
-        final int length = file.readInt();
+        int offset = file.readInt();//read location tables
 
+        file.seek((offset >> 8) * 4096);//chunk offset formula multiplied by 4096 gives exact start of chunk location
+        int length = file.readInt();//reading length in bytes the size of the chunk
 
-        if (DataConversion.readByte(file) == 2) {
-            byte[] bytes = DataConversion.readBytes(file, length);
+        final byte version = file.readByte();
+
+        if (version == 2) {
+            byte[] bytes = new byte[length - 1];
+            file.readFully(bytes);
             //System.out.println(offsetPosition + "=offsetPos " + positionSize + "=posSize");
+            final List<Tag> tags = new ArrayList<>();
 
             try (final InputStream compressed = new ByteArrayInputStream(bytes)) {
                 try (final InputStream datastream = new InflaterInputStream(compressed)) {
                     try (final DataInputStream input = new DataInputStream(datastream)) {
 
-                        final List<Tag> tags = new ArrayList<>();
+
+
                         // Parse tags, starting with ID
                         final byte rootID = input.readByte();
 
@@ -202,58 +204,60 @@ public class Chunk {
                         //   input.readFully(rootBytes);
 
                         Tag rootTag = readValue(input, rootID);
+                        tags.add(rootTag);
 
-
-                        Map<String, Tag> r = (Map<String, Tag>) rootTag.getPayload();
-                        //  System.out.println(r.keySet() + "." + r.entrySet());
-
-                        Map<String, Tag> level = (Map<String, Tag>) r.get("Level").getPayload();
-                        List<Tag> sections = (List<Tag>) level.get("Sections").getPayload();
-
-
-                        byte[] biomes = (byte[]) level.get("Biomes").getPayload();
-                        Chunk chunk = new Chunk(x,z, biomes);
-
-                        System.out.println(biomes.length + " biomes");
-                        // final ChunkSection section = chunkSection[y >> 4] == null ? chunkSection[y >> 4] = new ChunkSection() : chunkSection[y >> 4];
-
-                        for (int i = 0; i < sections.size(); i++) {
-                            Map<String, Tag> entry = (Map<String, Tag>) sections.get(i);
-
-
-                            byte y = (byte) entry.get("Y").getPayload();
-                            byte[] blocks = (byte[]) entry.get("Blocks").getPayload();
-
-                            for (byte b : blocks) {
-                                System.out.println(b);
-                            }
-                            byte[] data = (byte[]) entry.get("Data").getPayload();
-                            byte[] blocklight = (byte[]) entry.get("BlockLight").getPayload();
-                            byte[] skylight = (byte[]) entry.get("SkyLight").getPayload();
-
-                            short[] types = new short[blocks.length];
-
-                            //blocks is 4096 and data is half(2048). we need to make room for data using this maths
-                            for (int j = 0; j < types.length; j++) {
-                                types[j] = (short) (blocks[i] << 4 | data[i / 2] >> 4 * (i % 2) & 0xF);
-                            }
-
-                            chunk.sections[y] = new ChunkSection(types, skylight, blocklight);
-
-
-                            System.out.println(blocks.length + " blocks\n" + data.length + " data\n" + blocklight.length + " blocklight\n" + skylight.length + " skylight\n");
-
-                            System.out.println(y + " byte from section " + i);
-
-                            System.out.println("CHUNK =" + chunk);
-                        }
-
-                        return chunk;
                     }
                 }
             }
+
+            for (Tag t : tags) {
+                Map<String, Tag> r = (Map<String, Tag>) t.getPayload();
+                //  System.out.println(r.keySet() + "." + r.entrySet());
+
+                Map<String, Tag> level = (Map<String, Tag>) r.get("Level").getPayload();
+                List<Tag> sections = (List<Tag>) level.get("Sections").getPayload();
+
+
+                byte[] biomes = (byte[]) level.get("Biomes").getPayload();
+                Chunk chunk = new Chunk(x, z, biomes);
+
+                System.out.println(biomes.length + " biomes");
+                // final ChunkSection section = chunkSection[y >> 4] == null ? chunkSection[y >> 4] = new ChunkSection() : chunkSection[y >> 4];
+
+                for (int i = 0; i < sections.size(); i++) {
+                    Map<String, Tag> entry = (Map<String, Tag>) sections.get(i);
+
+
+                    byte y = (byte) entry.get("Y").getPayload();
+                    byte[] blocks = (byte[]) entry.get("Blocks").getPayload();
+                    byte[] data = (byte[]) entry.get("Data").getPayload();
+                    byte[] blocklight = (byte[]) entry.get("BlockLight").getPayload();
+                    byte[] skylight = (byte[]) entry.get("SkyLight").getPayload();
+
+                    short[] types = new short[blocks.length];
+
+                    //blocks is 4096 and data is half(2048). we need to make room for data using this maths
+
+                    for (int j = 0; j < types.length; j++) {
+                        types[j] = (short) (blocks[j] << 4 | data[j / 2] >> 4 * (j % 2) & 0xF);
+                    }
+
+                    chunk.sections[y] = new ChunkSection(types, skylight, blocklight);
+
+
+                    System.out.println(blocks.length + " blocks\n" + data.length + " data\n" + blocklight.length + " blocklight\n" + skylight.length + " skylight\n");
+
+                    System.out.println(y + " byte from section " + i);
+
+                    System.out.println("CHUNK =" + chunk);
+                }
+
+                return chunk;
+            }
         }
         return null;
+
+
     }
 
 
