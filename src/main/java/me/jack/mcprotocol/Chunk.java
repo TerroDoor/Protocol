@@ -116,8 +116,8 @@ public class Chunk {
 
         DataConversion.writeShort(out, mask);
 
-// calculate how big the data will need to be - types,sky,emitted combined is 3 * 4096(size of the arrays) multiplied by the sections being used,
-// biomes is 256 always so its to the size of the entire 'chunk'
+        // calculate how big the data will need to be - types,sky,emitted combined is 3 * 4096(size of the arrays) multiplied by the sections being used,
+        // biomes is 256 always so its to the size of the entire 'chunk'
         final int size = (3 * 4096 * sections_count) + 256;
 
         DataConversion.writeVarInt(out, size);
@@ -259,123 +259,6 @@ public class Chunk {
 
 
     }
-
-
-
-/*
-           for (Tag tag : tags) {
-                Map<String, Tag> payloadMapTags = (Map<String, Tag>) tag.getPayload();
-                System.out.println(payloadMapTags.size());
-                // System.out.println(entry.getKey() + " -key\n" + entry.getValue().getID() + " -value ID\n" + entry.getValue().getPayload() + " -value paylaod\n");
-                Map<String, Tag> level = (Map<String, Tag>) payloadMapTags.get("Level").getPayload();
-                List<Tag> sections = (List<Tag>) level.get("Sections").getPayload();
-
-
-                for (int i = 0; i < sections.size(); i++) {
-                    Map<String, Tag> entry = (Map<String, Tag>) sections.get(i);
-
-                    //System.out.println(section.entrySet());
-
-                    for (Tag sectionTag : entry.values()) {
-
-                        if (sectionTag.getID() == 7) {
-                            byte[] b = (byte[]) sectionTag.getPayload();
-                            System.out.println(b.length + " bytes from section " + i);
-
-                        }
-                        if (sectionTag.getID() == 1) {
-                            byte b = (byte) sectionTag.getPayload();
-                            System.out.println(b + " byte from section " + i);
-
-                        }
-                    }
-                }
-            }
-        }
- */
-
-            /*
-             Map<String, Tag> payloadMapTags = (Map<String, Tag>) tag.getPayload();
-                System.out.println(payloadMapTags.size());
-                // System.out.println(entry.getKey() + " -key\n" + entry.getValue().getID() + " -value ID\n" + entry.getValue().getPayload() + " -value paylaod\n");
-                Map<String, Tag> level = (Map<String, Tag>) payloadMapTags.get("Level").getPayload();
-                List<Tag> sections = (List<Tag>) level.get("Sections").getPayload();
-
-
-                for (int i = 0; i < sections.size(); i++) {
-                    Map<String, Tag> section = (Map<String, Tag>) sections.get(i);
-
-                    //System.out.println(section.entrySet());
-
-                    for (Tag sectionTag : section.values()) {
-
-                        if (sectionTag.getID() == 7) {
-                            byte[] b = (byte[]) sectionTag.getPayload();
-                            System.out.println(b.length + " bytes from section " + i);
-
-                        }
-                        if (sectionTag.getID() == 1) {
-                            byte b = (byte) sectionTag.getPayload();
-                            System.out.println(b + " byte from section " + i);
-
-                        }
-                    }
-                }
-            }
-        }
-
-             */
-/*
-
-
-
-        final List<Tag> tags = new ArrayList<>();
-
-
-        // Parse tags, starting with ID
-        final byte ID = input.readByte();
-        //two bytes for an unsigned big endian length (short is 2 byte)
-        final short len = input.readShort();
-        //utf string of that length for the name
-        input.skipBytes(len);
-        // final String name = new String(bytes, StandardCharsets.UTF_8);
-
-
-        //   System.out.println(name);
-        ///   System.out.println("first read on compound = " + name);//always null according to wiki
-
-        //  System.out.println(ID + "ID");
-        Tag tag = readValue(input, ID);
-        tags.add(tag);
-
-        Map<String, Tag> payloadMapTags = (Map<String, Tag>) tag.getPayload();
-
-        System.out.println(payloadMapTags.size());
-        // System.out.println(entry.getKey() + " -key\n" + entry.getValue().getID() + " -value ID\n" + entry.getValue().getPayload() + " -value paylaod\n");
-        Map<String, Tag> level = (Map<String, Tag>) payloadMapTags.get("Level").getPayload();
-        List<Tag> sections = (List<Tag>) level.get("Sections").getPayload();
-
-
-        for (int i = 0; i < sections.size(); i++) {
-            Map<String, Tag> section = (Map<String, Tag>) sections.get(i);
-
-            //System.out.println(section.entrySet());
-
-            for (Tag sectionTag : section.values()) {
-
-                if (sectionTag.getID() == 7) {
-                    byte[] b = (byte[]) sectionTag.getPayload();
-                    System.out.println(b.length + " bytes from section " + i);
-
-                }
-                if (sectionTag.getID() == 1) {
-                    int b = (int) sectionTag.getPayload();
-                    System.out.println(b + " byte from section " + i);
-
-                }
-            }
-        }
- */
 
 
     /*
